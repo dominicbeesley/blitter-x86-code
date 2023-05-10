@@ -178,6 +178,9 @@ FDC_II_STAT_RD_ERRMASK		equ	03Ch
 		SEG_SCREEN_MO7	equ	0xF7C0
 		SEG_DEBUG	equ	0xC000
 
+
+		SCREEN_SIZE_MO4 	equ	0h2800
+
 		; boot time stack
 		SEG_INIT_STACK	equ	0x30
 		INIT_STACK_TOS	equ	0x80
@@ -243,7 +246,7 @@ NMI_PTR 	resw		1
 		add	AL, 0h10
 		jns	%%lp
 
-		mov	AL,0h80 + f
+		mov	AL,0h80 + %1
 %%lp2:		out	DX,AL
 		add	AL, 0h10
 		js	%%lp2
@@ -261,13 +264,13 @@ NMI_PTR 	resw		1
 		mov	AH,AL
 		mov	BH, 8
 %%lp2:		xor	AL,AL
-		RCL	AH		; shift out leftmost
+		rcl	AH,1		; shift out leftmost
 		jnc	%%sk2
 		dec	AL
 %%sk2:		mov	CX,16
 		rep stosb
 		dec	BH
-		jnz	lp2
+		jnz	%%lp2
 		add	DI,320-8*16
 		dec	BL
 		jnz	%%lp
@@ -473,8 +476,32 @@ endvers:
 
 
 
+;;		; switch to mode 4 and do some reading an writing
+		MODEx	mode_4_setup, 0h88
 
-;		MODEx	mode_4_setup, 0h88
+		PAL	3
+
+		WAITL
+
+		; clear screen memory
+		mov	AX,SEG_SCREEN_MO4
+		mov	ES,AX
+		sub	DI,DI
+		xor	AX,AX
+		mov	CX,SCREEN_SIZE_MO4/2
+		stosw
+
+		mov	DH,0
+ilo:		sub	DI,DI
+		mov	CX,320*24
+ilo2:		inc	BYTE [ES:DI]
+		inc	DI
+		loop	ilo2
+
+		MAGNIFY
+
+		dec	DH
+		jnz	ilo
 
 
 HERE:		jmp	_start
