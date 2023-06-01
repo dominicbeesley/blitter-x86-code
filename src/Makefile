@@ -1,6 +1,6 @@
 	include ./Makefile.defs
 
-SUBDIRSWIMAKE:=blitlib demos roms test tools65
+SUBDIRSWIMAKE:=bios testrom testrom386
 
 $(TOPTARGETS): $(SUBDIRSWIMAKE)
 

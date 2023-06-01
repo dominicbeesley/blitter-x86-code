@@ -1,7 +1,7 @@
 [map all]
 
 
-cpu 186
+cpu 386
 
 
 
@@ -283,6 +283,26 @@ NMI_PTR 	resw		1
 _start:
 handle_res:	
 		cli	; no interrupts please!
+
+;;		mov	DX,07C00h
+;;		mov	AX,04041h
+;;
+;;x1:		out	(DX),AX
+;;		
+;;		nop
+;;		nop
+;;		nop
+;;		nop
+;;		nop
+;;		inc	AX
+;;		jmp	x1
+
+
+		mov	EAX,0F7C0h
+		mov	DS,AX
+x1:		mov	DS:[0],AL
+		inc	EAX
+		jmp	x1
 
 		; set up BIOS interrupt vectors to dummy interrupt [l=595]
 		sub	DI,DI
