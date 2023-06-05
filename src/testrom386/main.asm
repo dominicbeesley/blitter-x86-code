@@ -4,7 +4,7 @@
 cpu 386
 
 
-%define MEMMAP 1
+;%define MEMMAP 1
 
 
 
