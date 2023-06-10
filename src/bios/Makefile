@@ -1,13 +1,16 @@
 		include ../Makefile.defs
 
-SSD=$(SSDS)/blitbios.ssd
-DEPLOY=$(DEPLOY_TOP)/boot80188
+SSD_18x=$(SSDS)/bbios18x.ssd
+DEPLOY_18x=$(DEPLOY_TOP)/boot80188
+
+SSD_386ex=$(SSDS)/bbios386.ssd
+DEPLOY_386ex=$(DEPLOY_TOP)/boot386ex
 
 AS=nasm
-ASFLAGS=
+ASFLAGS=-I $(INC)
 MAP2SYM=$(SCRIPTS)/map2sym.pl
 
-OBJS=blitbios.rom
+OBJS=bbios18x.rom bbios386ex.rom
 EXTRAS=$(basename $(wildcard extras/*.inf))
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
@@ -17,29 +20,49 @@ OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 .PHONY: clean all $(SUBDIRS)
 
 all: $(OBJS_O)
-ssd: all $(SSD)
+ssd: all $(SSD_18x) $(SSD_386ex)
 
 clean: $(SUBDIRS)
-	-rm $(SSD)
-	-rm $(BUILD)/blitbios.rom
-	-rm $(BUILD)/blitbios.rom.inf
-	-rm $(BUILD)/blitbios.noi
-	-rm $(BUILD)/blitbios.map
-	-rm $(BUILD)/blitbios.lst
+	-rm $(SSD_18x) $(SSD_386ex)
+	-rm $(BUILD)/bbios18x.rom
+	-rm $(BUILD)/bbios18x.rom.inf
+	-rm $(BUILD)/bbios18x.noi
+	-rm $(BUILD)/bbios18x.map
+	-rm $(BUILD)/bbios18x.lst
+	-rm $(BUILD)/bbios386ex.rom
+	-rm $(BUILD)/bbios386ex.rom.inf
+	-rm $(BUILD)/bbios386ex.noi
+	-rm $(BUILD)/bbios386ex.map
+	-rm $(BUILD)/bbios386ex.lst
 
 deploy: ssd
-	mkdir -p $(DEPLOY)
-	dfs read -i -d $(DEPLOY) $(SSD)
+	mkdir -p $(DEPLOY_18x)
+	dfs read -i -d $(DEPLOY_18x) $(SSD_18x)
+
+	mkdir -p $(DEPLOY_386ex)
+	dfs read -i -d $(DEPLOY_386ex) $(SSD_386ex)
 
 
-$(BUILD)/blitbios.rom: main.asm
-	$(AS) $(ASFLAGS) -fbin -o $@ -l $(basename $@).lst $< >$(basename $@).map
+
+
+$(BUILD)/bbios18x.rom: main.asm deice.asm video.asm bbc_keyboard.asm $(wildcard $(INC)/*.inc) 
+	$(AS) $(ASFLAGS) -DBOARD_18x=1 -fbin -o $@ -l $(basename $@).lst $< >$(basename $@).map
 	$(MAP2SYM) $(basename $@).map $(basename $@).noi .text=FC00
 	echo "M.BIOS FFFFC000 FFFFC000" >$@.inf
 
+$(BUILD)/bbios386ex.rom: main.asm deice.asm video.asm bbc_keyboard.asm $(wildcard $(INC)/*.inc) 
+	$(AS) $(ASFLAGS) -DBOARD_386ex=1-fbin -o $@ -l $(basename $@).lst $< >$(basename $@).map
+	$(MAP2SYM) $(basename $@).map $(basename $@).noi .text=FC00
+	echo "M.BIOS FFFFC000 FFFFC000" >$@.inf
 
-$(SSD):	$(OBJS_O)
-	dfs form -80 $(SSD)
-	dfs opt4 -3 $(SSD)
-	dfs title $(SSD) "blitbios"
-	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O) $(EXTRAS))
+$(SSD_18x):	$(OBJS_O)
+	dfs form -80 $(SSD_18x)
+	dfs opt4 -3 $(SSD_18x)
+	dfs title $(SSD_18x) "bios18x"
+	dfs add $(SSD_18x) $(addsuffix .inf, $(BUILD)/bbios18x.rom $(EXTRAS))
+
+$(SSD_386ex):	$(OBJS_O)
+	dfs form -80 $(SSD_386ex)
+	dfs opt4 -3 $(SSD_386ex)
+	dfs title $(SSD_386ex) "blitbios"
+	dfs add $(SSD_386ex) $(addsuffix .inf, $(BUILD)/bbios386ex.rom $(EXTRAS))

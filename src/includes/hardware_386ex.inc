@@ -1,0 +1,102 @@
+REMAPCFGH	equ     0023h
+REMAPCFGL	equ     0022h
+REMAPCFG	equ     0022h
+
+DMA0TAR		equ     0F000h
+DMA0BYC		equ     0F001h
+DMA1TAR		equ     0F002h
+DMA1BYC		equ     0F003h
+DMACMD1		equ     0F008h
+DMASTS		equ     0F008h
+DMASRR		equ     0F009h
+DMAMSK		equ     0F00Ah
+DMAMOD1		equ     0F00Bh
+DMACLRBP	equ     0F00Ch
+DMACLR		equ     0F00Dh
+DMACLRMSK	equ     0F00Eh
+DMAGRPMSK	equ     0F00Fh
+DMA0REQ		equ     0F010h
+DMA0REQ2	equ     0F011h
+DMA1REQ		equ     0F012h
+DMA1REQ2	equ     0F013h
+DMABSR		equ     0F018h
+DMACHR		equ     0F019h
+DMAIS		equ     0F019h
+DMACMD2		equ     0F01Ah
+DMAMOD2		equ     0F01Bh
+DMAIEN		equ     0F01Ch
+DMAOVFE		equ     0F01Dh
+DMACLRTC	equ     0F01Eh
+
+DMA1TAR2	equ		0F083h
+DMA1TAR3	equ		0F085h
+DMA0TAR3	equ		0F086h
+DMA0TAR2	equ		0F087h
+
+DMA0BYC2	equ		0F098h
+DMA1BYC2	equ		0F099h
+
+
+ICW1M		equ		0F020h
+ICW2M		equ		0F021h
+ICW3M		equ		0F021h
+ICW4M		equ		0F021h
+OCW1M		equ		0F021h
+OCW2M		equ		0F020h
+OCW3M		equ		0F020h
+IRR_M		equ		0F020h
+
+ICW1S		equ		0F0A0h
+ICW2S		equ		0F0A1h
+ICW3S		equ		0F0A1h
+ICW4S		equ		0F0A1h
+OCW1S		equ		0F0A1h
+OCW2S		equ		0F0A0h
+OCW3S		equ		0F0A0h
+IRR_S		equ		0F0A0h
+
+VAL_EOI		equ		020h
+
+CS0ADL  	equ     0F400h
+CS0ADH  	equ     0F402h
+CS0MSKL 	equ     0F404h
+CS0MSKH 	equ     0F406h
+CS1ADL  	equ     0F408h
+CS1ADH  	equ     0F40Ah
+CS1MSKL 	equ     0F40Ch
+CS1MSKH 	equ     0F40Eh
+CS2ADL  	equ     0F410h
+CS2ADH  	equ     0F412h
+CS2MSKL 	equ     0F414h
+CS2MSKH 	equ     0F416h
+CS3ADL  	equ     0F418h
+CS3ADH  	equ     0F41Ah
+CS3MSKL 	equ     0F41Ch
+CS3MSKH 	equ     0F41Eh
+CS4ADL  	equ     0F420h
+CS4ADH  	equ     0F422h
+CS4MSKL 	equ     0F424h
+CS4MSKH 	equ     0F426h
+CS5ADL  	equ     0F428h
+CS5ADH  	equ     0F42Ah
+CS5MSKL 	equ     0F42Ch
+CS5MSKH 	equ     0F42Eh
+CS6ADL  	equ     0F430h
+CS6ADH  	equ     0F432h
+CS6MSKL 	equ     0F434h
+CS6MSKH 	equ     0F436h
+UCSADL  	equ     0F438h
+UCSADH  	equ     0F43Ah
+UCSMSKL 	equ     0F43Ch
+UCSMSKH 	equ     0F43Eh
+
+P1CFG		equ		0F820h
+P2CFG		equ		0F822h
+P3CFG		equ		0F824h
+PINCFG		equ		0F826h
+DMACFG		equ		0F830h
+INTCFG		equ		0F832h
+TMRCFG		equ		0F834h
+SIOCFG		equ		0F836h
+
+
