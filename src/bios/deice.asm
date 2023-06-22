@@ -276,14 +276,22 @@ DEICE_PUTCHAR:
 ;  Response string for GET TARGET STATUS request
 ;  Reply describes target:
 TSTG:	
-		db	86			; 2: PROCESSOR TYPE = 68k
+%ifdef	BOARD_18x
+		db	87			; 2: PROCESSOR TYPE = 16-bit x86
+%else
+		db	89			; 2: PROCESSOR TYPE = 386
+%endif
 		db	COMBUF_SIZE		; 3: SIZE OF COMMUNICATIONS BUFFER
 		db	0			; 4: NO TASKING SUPPORT
 		dw	0,0FFFFh			; 5-8: LOW AND HIGH LIMIT OF MAPPED MEM (ALL!)		-- note 68008 has 24 bit address space "paging" register is just the high MSB!
 		db	.B1-.B0			; 9:  BREAKPOINT INSTR LENGTH
 .B0:		int3				; 10: BREAKPOINT INSTRUCTION
 .B1:		
-		db	"x86"
+%ifdef	BOARD_18x
+		db	"186/188"
+%else
+		db	"386"
+%endif
 		db	" monitor V1.1"	; DESCRIPTION, ZERO
 		db	"-BBC"
 		db	0 
