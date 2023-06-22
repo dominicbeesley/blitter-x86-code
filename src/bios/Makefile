@@ -15,6 +15,8 @@ EXTRAS=$(basename $(wildcard extras/*.inf))
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 
+SECTIONS=.text=FC00 biosdata=40 interrupts=0
+
 .DELETE_ON_ERROR:
 
 .PHONY: clean all $(SUBDIRS)
@@ -47,12 +49,12 @@ deploy: ssd
 
 $(BUILD)/bbios18x.rom: main.asm deice.asm video.asm bbc_keyboard.asm $(wildcard $(INC)/*.inc) 
 	$(AS) $(ASFLAGS) -DBOARD_18x=1 -fbin -o $@ -l $(basename $@).lst $< >$(basename $@).map
-	$(MAP2SYM) $(basename $@).map $(basename $@).noi .text=FC00
+	$(MAP2SYM) $(basename $@).map $(basename $@).noi $(SECTIONS)
 	echo "M.BIOS FFFFC000 FFFFC000" >$@.inf
 
 $(BUILD)/bbios386ex.rom: main.asm deice.asm video.asm bbc_keyboard.asm $(wildcard $(INC)/*.inc) 
 	$(AS) $(ASFLAGS) -DBOARD_386ex=1-fbin -o $@ -l $(basename $@).lst $< >$(basename $@).map
-	$(MAP2SYM) $(basename $@).map $(basename $@).noi .text=FC00
+	$(MAP2SYM) $(basename $@).map $(basename $@).noi $(SECTIONS)
 	echo "M.BIOS FFFFC000 FFFFC000" >$@.inf
 
 $(SSD_18x):	$(OBJS_O)

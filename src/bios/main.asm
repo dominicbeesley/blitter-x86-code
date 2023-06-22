@@ -32,7 +32,7 @@
 		mov	AX,08000h
 		mov	DX,io_PCB_EOI
 		out	DX,AL			; EOI
-	%elif BOARD_386ex
+	%elifdef BOARD_386ex
 		mov	AL,VAL_EOI
 		mov	DX,OCW2M
 		out	(DX),AL
@@ -44,7 +44,7 @@
 		mov	AX,08000h
 		mov	DX,io_PCB_EOI
 		out	DX,AL			; EOI
-	%elif BOARD_386ex
+	%elifdef BOARD_386ex
 		mov	AL,VAL_EOI
 		mov	DX,OCW2S
 		mov	DX,OCW2M
@@ -64,51 +64,50 @@
 		SEG_INIT_STACK	equ	0x30
 		INIT_STACK_TOS	equ	0x80
 
-
-		SEG_INT		equ	0x00
-		absolute	2*4
-NMI_PTR 	resw		1
-		absolute	5*4
-INT5_PTR	resw		1
-		absolute	8*4
-INT_PTR 	resw		1
-		absolute	10H*4
-VIDEO_INT	resw		1
-		absolute	1DH*4
-PARM_PTR	resw		1		; video parameters pointer
-		absolute	18H*4
-BASIC_PTR	resw		1		; cassette BASIC entry point
-		absolute	01EH*4		; int 1EH
-DISK_POINTER	resw		1
-		absolute	01FH*4		
-EXT_PTR 	resw		1		; extension routine pointer
-		absolute	040H*4
-IO_ROM_INIT	resw		1		
-IO_ROM_SEG	resw		1		; option ROM SEG
-		absolute	400H
-DATA_AREA	resb		1		; BIOS data segment absolute (0:400) address, usually 40:0
-
-		
 BOOT_LOCN	equ		7C00H
 
+		section interrupts nobits start=0
+		SEG_INT		equ	0x00
+INT_DIV0:	resd		1
+INT_RESV:	resd		1
+NMI_PTR: 	resd		1
+INT3_PTR:	resd		1
+INTO_PTR:	resd		1
+INT_BOUND:
+INT5_PTR:	resd		1
+INT_OPCODE:	resd		1
+INT_WAIT:	resd		1
+INT_DOUBLE:
+INT_PTR: 	resd		1
+		resd		7
+VIDEO_INT:	resd		1
+		resd		7
+BASIC_PTR:	resd		1		; cassette BASIC entry point
+		resd		4
+PARM_PTR:	resd		1		; video parameters pointer
+DISK_POINTER:	resd		1
+EXT_PTR:	resd		1		; extension routine pointer
+		resd		1
+IO_ROM_INIT:	resw		1		
+IO_ROM_SEG:	resw		1		; option ROM SEG
+	
 
-
+		section biosdata nobits start=0 absolute=0x40
 		SEG_BIOS_DATA	equ	0x40
-		absolute	0
 ;----------------------------------------
 ;	 ROM BIOS DATA AREAS		:
 ;----------------------------------------
-RS232_BASE	resw	4		; ADDRESSES OF RS232 ADAPTERS
-PRINTER_BASE	resw	4		; ADDRESSES OF PRINTERS
-EQUIP_FLAG	resw	1		; INSTALLED HARDWARE
-MFG_TST 	resb	1		; INITIALIZATION FLAG
-MEMORY_SIZE	resw	1		; MEMORY SIZE IN K BYTES
-IO_RAM_SIZE	resw	1		; MEMORY IN I/O CHANNEL
+RS232_BASE:	resw	4		; ADDRESSES OF RS232 ADAPTERS
+PRINTER_BASE:	resw	4		; ADDRESSES OF PRINTERS
+EQUIP_FLAG:	resw	1		; INSTALLED HARDWARE
+MFG_TST: 	resb	1		; INITIALIZATION FLAG
+MEMORY_SIZE:	resw	1		; MEMORY SIZE IN K BYTES
+IO_RAM_SIZE:	resw	1		; MEMORY IN I/O CHANNEL
 ;----------------------------------------
 ;	   KEYBOARD DATA AREAS		:
 ;----------------------------------------
-KB_FLAG 	resb	1		; toggles when a shift key is depressed
-KB_FLAG_1	resb	1		; reflects if a "shift" key is depressed
+KB_FLAG: 	resb	1		; toggles when a shift key is depressed
+KB_FLAG_1:	resb	1		; reflects if a "shift" key is depressed
 
 ;----- SHIFT FLAG EQUATES WITHIN KB_FLAG/1
 
@@ -121,10 +120,10 @@ CTL_SHIFT	EQU	04H		; CONTROL SHIFT KEY DEPRESSED
 LEFT_SHIFT	EQU	02H		; LEFT SHIFT KEY DEPRESSED
 RIGHT_SHIFT	EQU	01H		; RIGHT SHIFT KEY DEPRESSED
 
-ALT_INPUT	resb	1		; STORAGE FOR ALTERNATE KEYPAD ENTRY
-BUFFER_HEAD	resw	1		; POINTER TO HEAD OF KEYBOARD BUFFER
-BUFFER_TAIL	resw	1		; POINTER TO TAIL OF KEYBOARD BUFFER
-KB_BUFFER	resw	16		; ROOM FOR 15 ENTRIES
+ALT_INPUT:	resb	1		; STORAGE FOR ALTERNATE KEYPAD ENTRY
+BUFFER_HEAD:	resw	1		; POINTER TO HEAD OF KEYBOARD BUFFER
+BUFFER_TAIL:	resw	1		; POINTER TO TAIL OF KEYBOARD BUFFER
+KB_BUFFER:	resw	16		; ROOM FOR 15 ENTRIES
 KB_BUFFER_END:
 
 ;----- HEAD = TAIL INDICATES THAT THE BUFFER IS EMPTY
@@ -139,7 +138,6 @@ RIGHT_KEY	EQU	54		; SCAN CODE FOR RIGHT SHIFT
 INS_KEY 	EQU	82		; SCAN CODE FOR INSERT KEY
 DEL_KEY 	EQU	83		; SCAN CODE FOR DELETE KEY
 
-		absolute	3Eh
 ;----------------------------------------
 ;	DISKETTE DATA AREAS		:
 ;----------------------------------------
@@ -170,11 +168,10 @@ BAD_CMD 	EQU	01H		; bad command passed to diskette i/o
 DSK_PREV_DRV	resb	1		; drive of previous command, if different need to restore track register
 DSK_TRACK_TBL	resb	2		; drive A, B track number
 
-
+		resb	4		;absolute	49H
 ;----------------------------------------
 ;	VIDEO DISPLAY DATA AREA 	:
 ;----------------------------------------
-		absolute	49H
 CRT_MODE	resb	1		; CURRENT CRT MODE
 CRT_COLS	resw	1		; NUMBER OF COLUMNS ON SCREEN
 CRT_LEN 	resw	1		; LENGTH OF REGEN IN BYTES
@@ -186,7 +183,7 @@ NA_ADDR_6845	resw	1		; BASE ADDRESS FOR ACTIVE DISPLAY CARD -- NOT USED!
 CRT_MODE_SET	resb	1		; CURRENT SETTING OF THE 3X8 REGISTER
 CRT_PALETTE	resb	1		; CURRENT PALETTE SETTING COLOR CARD
 
-		absolute	6Ch
+		resb	5		;absolute	6Ch
 ;----------------------------------------
 ;	    TIMER DATA AREA		:
 ;----------------------------------------
@@ -200,7 +197,7 @@ TIMER_OFL	resb	1		; TIMER HAS ROLLED OVER SINCE LAST READ
 
 
 
-		absolute	80H	;TODO: check!
+		resb	15		; absolute	80H	
 ;----------------------------------------
 ;	EXTRA KEYBOARD DATA AREA	:
 ;----------------------------------------
@@ -208,7 +205,7 @@ BUFFER_START	resw	1
 BUFFER_END	resw	1
 
 
-		absolute	86H	; BBC KEYBOARD stuff uses PCjr slots
+		resb	2		; absolute	86H	; BBC KEYBOARD stuff uses PCjr slots
 KB_BBC_ROLL	resb	2		; 2 key roll over buffer
 
 
@@ -223,6 +220,31 @@ word_tab:
 		DW	UCSADL, 0FF80h	; set memory to manual READY 0 wait states
 
 		DW	0FFFFh		; end marker
+
+%macro		M_BYT 2
+		DW	%1
+		DB	%2
+%endmacro
+
+byte_tab:	M_BYT	INTCFG, 0
+
+		M_BYT	ICW1M, 	010h	; edge sensitive
+		M_BYT	ICW1S, 	010h	; edge sensitive
+
+		M_BYT	ICW2M, 	020h	; base interrupt #
+		M_BYT	ICW2S, 	070h	; base interrupt #
+
+		M_BYT	ICW3M, 	004h	; slave cascade
+		M_BYT	ICW3S, 	002h	; slave ID
+
+		M_BYT	ICW4M, 	001h	; ?
+		M_BYT	ICW4S, 	001h	; ?
+
+		M_BYT	OCW1M, 	0FFh	; Mask all interrupts!
+		M_BYT	OCW1S, 	0FFh	; Mask all interrupts!
+
+		DW	0FFFFh		; end marker
+
 	%endif
 
 _start:
@@ -255,6 +277,16 @@ handle_res:
 		jmp	.initwlp
 .initwsk:
 
+		mov	SI,byte_tab
+
+.initblp:	lodsw			; get port #
+		mov	DX,AX
+		inc	AX
+		jz	.initbsk
+		lodsb
+		out	DX,AL
+		jmp	.initblp
+.initbsk:
 
 
 %endif		
@@ -287,6 +319,7 @@ handle_res:
 		mov	DX,io_SHEILA_SYSVIA_ORB
 .llp:		dec	AL
 		out	DX,AL
+		call	snd_wait_8
 		cmp	AL,9
 		jnc	.llp
 
@@ -741,6 +774,7 @@ FDC_CMD_EXEC:
 
 
 snd_init:
+		; attenuations
 		mov	AL,0FFh
 		call	snd_poke
 		mov	AL,0DFh
@@ -749,6 +783,28 @@ snd_init:
 		call	snd_poke
 		mov	AL,09Fh
 		call	snd_poke
+
+		; pitches
+		mov	AL,080h
+		call	snd_poke
+		mov	AL,000h
+		call	snd_poke
+
+		mov	AL,0A0h
+		call	snd_poke
+		mov	AL,000h
+		call	snd_poke
+
+		mov	AL,0C0h
+		call	snd_poke
+		mov	AL,000h
+		call	snd_poke
+
+		mov	AL,0E0h
+		call	snd_poke
+		mov	AL,000h
+		call	snd_poke
+
 		ret
 
 
@@ -759,13 +815,15 @@ snd_poke:	pushf
 		mov	DX,io_SHEILA_SYSVIA_DDRA
 		mov	AL,0FFh
 		out	DX,AL
+		call	snd_wait_8
 		pop	AX
 		mov	DX,io_SHEILA_SYSVIA_ORA_NH
 		out	DX,AL
+		call	snd_wait_8
 		mov	AL,000h
 		mov	DX,io_SHEILA_SYSVIA_ORB
 		out	DX,AL
-		call	snd_wait_2
+		call	snd_wait_8
 		mov	AL,008h
 		mov	DX,io_SHEILA_SYSVIA_ORB
 		out	DX,AL
@@ -778,10 +836,15 @@ snd_poke:	pushf
 
 ; TODO: find more exact delay 
 ; TODO: this also used in FDC code
-snd_wait_8:	call	snd_wait_4
-snd_wait_4:	call	snd_wait_2
-snd_wait_2:	call	snd_wait_1
-snd_wait_1:	ret
+snd_wait_8:	
+		push	AX
+		push	CX
+		mov	CL,8
+.lp:		in	AL,io_SHEILA_SYSVIA_DDRA		; read a port to force a 1MHz cycle
+		loop	.lp
+		pop	CX
+		pop	AX
+		ret
 ;------------------------------------------------------------------------
 ; send_set_pitch							:
 ;INPUT	CL = channel							:
@@ -1126,7 +1189,7 @@ DDS:
 
 		; dummy interrupt - TODO: make this do something?
 DUMMY_RETURN:
-		IRET
+	IRET
 
 
 
