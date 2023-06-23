@@ -27,6 +27,12 @@
 		popf
 %endmacro
 
+%macro	DBG_STR 1
+		call	deice_printstr
+		db	%1
+		db	0
+%endmacro
+
 %macro	M_EOI 0
 	%ifdef BOARD_18x
 		mov	AX,08000h
@@ -300,14 +306,8 @@ handle_res:
 
 		; initialise DEICE
 		call	deice_init
-		mov	AL,65
-		call	DEICE_PUTCHAR
 
-		call	deice_printstr
-		db	"HELLO",0
-		mov	AL,33
-		call	DEICE_PUTCHAR
-
+		DBG_STR	`DeIce started...\n`
 
 		; set up sys via
 
@@ -644,8 +644,6 @@ FDC1770_DRVSEL:
 		or	AL,04h		; side
 .sk		or	AL,20h
 
-;;		DBG_C	'%'
-;;		call	deice_HEX2
 
 ;------------------------------------------------------------------------
 ;FDC1770_CTL_WRITE							:
@@ -838,9 +836,10 @@ snd_poke:	pushf
 ; TODO: this also used in FDC code
 snd_wait_8:	
 		push	AX
-		push	CX
-		mov	CL,8
-.lp:		in	AL,io_SHEILA_SYSVIA_DDRA		; read a port to force a 1MHz cycle
+		push	DX
+		mov	AH,8
+		mov	DX,io_SHEILA_SYSVIA_DDRA
+.lp:		in	AL,DX			; read a port to force a 1MHz cycle
 		loop	.lp
 		pop	CX
 		pop	AX
@@ -1215,8 +1214,7 @@ BOOT_STRAP:
 		nop
 		nop
 
-		call	deice_CRLF
-		call	deice_CRLF
+		DBG_STR	`\nINT 19h starting...`
 
 		mov	SI,B_STR
 		call	print_str0
@@ -1352,8 +1350,12 @@ print_str0:	push	AX
 ;		TO ENSURE THAT THE PROBLEM IS NOT DUE TO MOTOR		:
 ;		START-UP.						:
 ;------------------------------------------------------------------------
-DISKETTE_IO:
+DISKETTE_IO:		
 		sti
+		
+		DBG_STR	`INT13h=====\n`
+		call	DBG_DUMPREGS_I
+
 		push	BX
 		push	CX
 		push	DS
@@ -1366,6 +1368,9 @@ DISKETTE_IO:
 
 		call	DDS
 		call	disk_io_int		; call the internal functions
+
+		DBG_STR	`=====INT13h\n`
+
 		; TODO: - think we can ignore all this stuff 1770 does motor control
 		mov	AH,[DISKETTE_STATUS]	; get return value
 		cmp	AH,1			
@@ -1401,13 +1406,7 @@ disk_io_int:
 		jmp	word [CS:SI+disk_io_tbl]
 
 disk_ret_bad_cmd:
-		call	deice_CRLF
-		DBG_C	'B'
-		DBG_C	'A'
-		DBG_C	'D'
-		DBG_C	'D'
-		DBG_C	'S'
-		DBG_C	'K'
+		DBG_STR `\nBADDSK`
 		push	AX
 		mov	AL,AH
 		call	deice_HEX2
@@ -1503,7 +1502,7 @@ disk_io_read:	push	ES
 
 		
 
-		DBG_C   '!'
+		DBG_STR  `SECRD:`
 
 .next_sector:
 		pop	AX
@@ -1686,7 +1685,6 @@ disk_io_read:	push	ES
 
 
 .r:
-;;		call	deice_CRLF
 		
 		pop	AX
 		pop	DX
@@ -1695,6 +1693,7 @@ disk_io_read:	push	ES
 		mov	AL,AH				; count of sectors actually read
 
 		DBG_C	'}'
+		call	deice_CRLF
 
 		ret
 
@@ -2091,6 +2090,27 @@ DBG_DUMPREGS_I:				; dump interrupt registers (i.e. CS,IP,F come from IRET)
 	mov	AL,[SS:BP+17]
 	call	deice_HEX2
 	mov	AL,[SS:BP+16]
+	call	deice_HEX2
+	DBG_C	','
+
+	DBG_C	'S'
+	DBG_C	'S'
+	DBG_C	'='
+	mov	AX,SS
+	xchg	AL,AH
+	call	deice_HEX2
+	xchg	AL,AH
+	call	deice_HEX2
+	DBG_C	','
+
+	DBG_C	'S'
+	DBG_C	'P'
+	DBG_C	'='
+	mov	AX,BP
+	add	AX,28
+	xchg	AL,AH
+	call	deice_HEX2
+	xchg	AL,AH
 	call	deice_HEX2
 	DBG_C	','
 

@@ -131,32 +131,38 @@ deice_init:	pushf
 		ret
 
 		; print string at PC until 0, advance PC
-deice_printstr:
+deice_printstr:	push	DS
 		push	SI
 		push	AX
 		push	BP
 		pushf
 		cld
 		mov	BP,SP
-		mov	SI,[SS:BP+8]			; get return address
-.lp:		CS lodsb
-		or	AL,AL
-		jz	.sk
-		call	deice_print_char
-		jc	.fl
-		jmp short .lp
-.sk:		mov	[SS:BP+8],SI
+		mov	SI,[SS:BP+10]			; get return address
+		mov	AX,CS
+		mov	DS,AX
+		call	deice_printstr_SI
+		mov	[SS:BP+10],SI
 		popf
 		pop	BP
 		pop	AX
 		pop	SI
+		pop	DS
 		ret
-.fl		CS lodsb				; skip rest of string if fail to send
+
+
+deice_printstr_SI:
+.lp:		lodsb
+		or	AL,AL
+		jz	.sk
+		call	deice_print_char
+		jc	.fl
+		jmp	short .lp
+.sk:		ret
+.fl		lodsb
 		or	AL,AL
 		jnz	.fl
-		jmp short .sk
-
-
+		ret
 
 deice_HEX4:	pushf
 		PUSH	CX
