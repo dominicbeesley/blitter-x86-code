@@ -98,11 +98,29 @@ DEICE_INT3:
 
 		; initialise the serial port for deice
 deice_init:	pushf
+		cli
 		push	ES
 		push	AX
 		push	DX
 		push	CX
 		push	DI
+
+
+		DBG_STR	`DeIce started...\n`
+
+		; setup deice interrupts
+		xor	AX,AX
+		mov	ES,AX
+		mov	word [ES:0004h], DEICE_INT1	; trace interrupt
+		mov	word [ES:000Ch], DEICE_INT3	; breakpoint interrupt
+		mov	word [ES:NMI_PTR],DEICE_NMI_INT	; NMI INTERRUPT - debug button !
+
+		; make sure correct CS
+		mov	AX,CS
+		mov	word [ES:0004h + 2],AX
+		mov	word [ES:000Ch + 2],AX
+		mov	word [ES:NMI_PTR + 2],AX
+
 
 		mov	DX,io_sheila_SERIAL_ULA
 		mov	AL,040h				; 19200,19200
@@ -345,7 +363,7 @@ INT_ENTRY:
 		push	CX
 		push	DX
 		push	BX
-		push	SP
+		push	BX	;ignored - is stack pointer in 186/pusha
 		push	BP
 		push	SI
 		push	DI
@@ -707,7 +725,8 @@ SET_BYTES:
 		xor	AH,AH
 		mov	CL,5
 		div	CL			; divide by 5 for length
-		jz	.SB99			; JIF NO BYTES (COMBUF+1 = 0)
+		or	AL,AL
+		jz	.SB99err			; JIF NO BYTES (COMBUF+1 = 0)		
 		mov	CL,AL
 		xor	CH,CH			; CX contains count of bytes to set
 
@@ -755,7 +774,8 @@ SET_BYTES:
 		pop	DI
 		pop	ES
 		jmp short .SB99			; return with count processed
-
+.SB99err:	mov	BYTE [COMBUF+1],0
+		jmp	SEND
 
 ;TODO: word sized read/write of I/O ports
 

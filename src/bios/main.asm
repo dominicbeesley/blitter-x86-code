@@ -303,12 +303,6 @@ handle_res:
 		mov	SS,AX	
 		mov	SP,INIT_STACK_TOS		; put SP at TOS
 
-
-		; initialise DEICE
-		call	deice_init
-
-		DBG_STR	`DeIce started...\n`
-
 		; set up sys via
 
 		mov	AL,0FH
@@ -451,7 +445,6 @@ F7A:		movsw
 		;TODO: this is a bodge/test
 		mov	word [ES:7*4],INT7_HANDLE
 
-		mov	word [ES:NMI_PTR],DEICE_NMI_INT	; NMI INTERRUPT - debug button !
 		;MOV	ES:INT5_PTR,OFFSET PRINT_SCREEN	; PRINT SCREEN
 
 		; TODO: not got cassette basic yet so just print error message
@@ -462,6 +455,31 @@ F7A:		movsw
 		pop	DS
 
 		;TODO: option rom stuff?
+		; initialise DEICE
+		call	deice_init
+
+	%ifdef BOARD_386ex
+	
+		xor	AX,AX
+		mov	ES,AX	
+
+		mov	EAX,0A0123456h
+		mov	EBX,0B0234567h
+		mov	ECX,0C0345678h
+		mov	EDX,0D0456789h
+
+		mov	ESI,05156789Ah
+		mov	EDI,0D16789ABh
+
+		mov	EBP,0B9789ABCh
+
+;;		int	3
+jmphere:
+		mov	word [ES:NMI_PTR],DEICE_NMI_INT	; NMI INTERRUPT - debug button !
+		jmp	jmphere
+
+	%endif
+
 
 
 		;TODO disk check here
@@ -583,29 +601,8 @@ TIMER_DIVIDER   equ	(CLOCK_SPEED*10)/(4*TIMER_PRESCALE*182)
 		call	tst_crlf
 
 
-		; setup deice interrupts
-		xor	AX,AX
-		mov	ES,AX
-		mov	AX,DEICE_INT1
-		mov	[ES:0004h], AX	; trace interrupt
 
-		mov	AX,DEICE_INT3
-		mov	[ES:000Ch], AX	; trace interrupt
-
-		; enter deice monitor
-
-		mov	AX,0DEADh
-		mov	ES,AX
-		mov	AX,0BEEFh
-		mov	DS,AX
-
-		mov	AX,SP
-		mov	BX,SS
-		mov	CX,09ABCh
-		mov	DX,0DEF0h
-		mov	BP,0B99Bh
-		mov	SI,05115h
-		mov	DI,0D11Dh
+		; BOOT!
 
 		int	19h
 
@@ -633,7 +630,8 @@ FDC1770_RESET:	mov	AL,0
 ;FDC1770_DRVSEL								:
 ;INPUT		AL							:
 ;	Sets drive to low bit of DL A=0/B=1				:
-;CORRUPTS	AL,DX							:
+;	Sets head to low bit of DH					:
+;CORRUPTS	AL							:
 ;------------------------------------------------------------------------
 FDC1770_DRVSEL:	
 		mov	AL,DL
@@ -840,8 +838,9 @@ snd_wait_8:
 		mov	AH,8
 		mov	DX,io_SHEILA_SYSVIA_DDRA
 .lp:		in	AL,DX			; read a port to force a 1MHz cycle
-		loop	.lp
-		pop	CX
+		dec	AH
+		jne	.lp
+		pop	DX
 		pop	AX
 		ret
 ;------------------------------------------------------------------------
@@ -1556,6 +1555,28 @@ disk_io_read:	push	ES
 		out	DX,AL
 		mov	AL,io_SHEILA_1770_DAT >> 8		; source is the 1770 data register
 		out	DX,AL
+
+		DBG_STR `\nLIN_ADDR=`
+
+		xor	EAX,EAX
+		mov	AX,ES
+		shl	EAX,4
+		add	AX,BX
+		jnc	.skc
+		add	EAX,010000h
+.skc
+		ror	EAX,16
+		xchg	AL,AH
+		call	deice_HEX2
+		xchg	AL,AH
+		call	deice_HEX2
+		ror	EAX,16
+		xchg	AL,AH
+		call	deice_HEX2
+		xchg	AL,AH
+		call	deice_HEX2
+
+		call	deice_CRLF
 
 		; need to convert ES:BX to linear address here 
 		mov	AX,ES
