@@ -1706,16 +1706,14 @@ disk_io_read:	push	ES
 
 
 .r:
-		
+		DBG_C	'}'
+		call	deice_CRLF
+
 		pop	AX
 		pop	DX
 		pop	ES
 		
 		mov	AL,AH				; count of sectors actually read
-
-		DBG_C	'}'
-		call	deice_CRLF
-
 		ret
 
 

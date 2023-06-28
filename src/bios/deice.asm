@@ -5,7 +5,7 @@
 DEICE_SEG		equ	0F000h		; where DEICE stores its stuff - TODO: think of somewhere better
 
 COMBUF_SIZE		equ	080h
-DEICE_STACK_SIZE	equ	0A0h
+DEICE_STACK_SIZE		equ	0A0h
 
 deice_regs		equ	0h
 
@@ -84,11 +84,12 @@ DEICE_INT3:
 			push	SI
 
 			mov	BP,SP
-			lds	SI,[SS:BP+8]
-			sub	SI,1
-			cmp	byte [DS:SI],0xCC
-			jne	.nocc
-			mov	[SS:BP+8],SI
+			lds	SI,[SS:BP+8]		; DS:SI points at instruction that caused interrupt
+			sub	SI,1			; decrement
+			cmp	byte [DS:SI],0xCC		; check if an int3 or an int 3
+			jne	.nocc			; no ignore
+			mov	[SS:BP+8],SI		; store back decremented IP to stack
+
 .nocc			pop	SI
 			pop	DS
 			pop	BP
