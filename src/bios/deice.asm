@@ -692,6 +692,15 @@ RUN_TARGET:
 %endif
 		pop	DS
 
+		; do an extra IRET, this allows any pending NMI's to clear before 
+		; clearing the run flag
+		pushf
+		push	CS
+		push	.actual_iret
+		iret
+
+.actual_iret:
+
 		; re-enable reentry
 		push	DEICE_SEG
 		pop	ES
@@ -702,6 +711,7 @@ RUN_TARGET:
 
 		; original ES
 		pop	ES
+
 		iret
 
 
