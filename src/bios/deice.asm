@@ -575,18 +575,16 @@ READ_MEM:	call	deice_get_seg_addr
 ;
 ;  Uses 6 bytes of stack
 ;
-WRITE_MEM:	push	SI
-		call	deice_get_seg_addr
-		pop	SI
-;
+WRITE_MEM:	call	deice_get_seg_addr
+		
 ;  Compute number of bytes to write
 		xor	CX,CX
 		mov	CL,[COMBUF+1]		; NUMBER OF BYTES TO WRITE+3
 		sub	CL,4			; MINUS ADDRESS 
 		jna	.WLP50			; JIF NO BYTES TO PUT
 
-		; TODO	check!
-
+		mov	SI,COMBUF+6		; point at data to write
+	
 ;  Write the specified bytes to local memory
 		push	CX
 		push	SI
