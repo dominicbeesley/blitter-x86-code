@@ -67,7 +67,7 @@ while (<$fh_m>) {
 			if (exists $segs{$cursec}) {
 				my $s = $segs{$cursec};
 				
-				printf $fh_n "DEF %s %04X%04X\n", $sym, $s & 0xFFFF, hex($add) & 0xFFFF;
+				printf $fh_n "DEF %s %04X:%04X\n", $sym, $s & 0xFFFF, hex($add) & 0xFFFF;
 			}
 		}
 

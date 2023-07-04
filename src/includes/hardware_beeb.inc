@@ -1,0 +1,102 @@
+;***********************************************************************
+;* System VIA                                                          *
+;***********************************************************************
+io_SHEILA_SYSVIA_ORB	equ	0FE40h
+io_SHEILA_SYSVIA_ORA	equ	0FE41h
+io_SHEILA_SYSVIA_DDRB	equ	0FE42h
+io_SHEILA_SYSVIA_DDRA	equ	0FE43h
+io_SHEILA_SYSVIA_T1CL	equ	0FE44h
+io_SHEILA_SYSVIA_T1CH	equ	0FE45h
+io_SHEILA_SYSVIA_T1LL	equ	0FE46h
+io_SHEILA_SYSVIA_T1LH	equ	0FE47h
+io_SHEILA_SYSVIA_T2CL	equ	0FE48h
+io_SHEILA_SYSVIA_T2CH	equ	0FE49h
+io_SHEILA_SYSVIA_SR	equ	0FE4Ah
+io_SHEILA_SYSVIA_ACR	equ	0FE4Bh
+io_SHEILA_SYSVIA_PCR	equ	0FE4Ch
+io_SHEILA_SYSVIA_IFR	equ	0FE4Dh
+io_SHEILA_SYSVIA_IER	equ	0FE4Eh
+io_SHEILA_SYSVIA_ORA_NH	equ	0FE4Fh
+
+;***********************************************************************
+;* User VIA                                                            *
+;***********************************************************************
+io_SHEILA_USRVIA_ORB	equ	0FE60h
+io_SHEILA_USRVIA_ORA	equ	0FE61h
+io_SHEILA_USRVIA_DDRB	equ	0FE62h
+io_SHEILA_USRVIA_DDRA	equ	0FE63h
+io_SHEILA_USRVIA_T1CL	equ	0FE64h
+io_SHEILA_USRVIA_T1CH	equ	0FE65h
+io_SHEILA_USRVIA_T1LL	equ	0FE66h
+io_SHEILA_USRVIA_T1LH	equ	0FE67h
+io_SHEILA_USRVIA_T2CL	equ	0FE68h
+io_SHEILA_USRVIA_T2CH	equ	0FE69h
+io_SHEILA_USRVIA_SR	equ	0FE6Ah
+io_SHEILA_USRVIA_ACR	equ	0FE6Bh
+io_SHEILA_USRVIA_PCR	equ	0FE6Ch
+io_SHEILA_USRVIA_IFR	equ	0FE6Dh
+io_SHEILA_USRVIA_IER	equ	0FE6Eh
+io_SHEILA_USRVIA_ORA_NH	equ	0FE6Fh
+
+io_SHEILA_CRTC		equ	0FE00h
+io_SHEILA_ULA		equ	0FE20h
+io_SHEILA_ULA_PAL	equ	0FE21h
+
+io_SHEILA_1770_CTL	equ	0FE80h
+io_SHEILA_1770_CMD	equ	0FE84h
+io_SHEILA_1770_TRK	equ	0FE85h
+io_SHEILA_1770_SEC	equ	0FE86h
+io_SHEILA_1770_DAT	equ	0FE87h
+
+io_sheila_ACIA_CTL	equ	0FE08h
+io_sheila_ACIA_DATA	equ	0FE09h
+io_sheila_SERIAL_ULA	equ	0FE10h
+ACIA_RDRF		equ	$01
+ACIA_TDRE		equ	$02
+
+
+FDC_CMD_BITS_R3			equ	003h
+FDC_CMD_BITS_SEEKSPEED		equ	000h
+
+
+FDC_I_CMD_REST			equ	000h
+FDC_I_CMD_SEEK			equ	010h
+FDC_I_CMD_STEP			equ	020h
+FDC_I_CMD_STEPI			equ	040h
+FDC_I_CMD_STEPO			equ	060h
+
+FDC_I_CMD_BITS_H		equ	008h
+FDC_I_CMD_BITS_V		equ	004h
+FDC_I_CMD_BITS_U		equ	010h
+
+FDC_I_STAT_BITS_MO		equ	080h
+FDC_I_STAT_BITS_SU		equ	020h
+FDC_I_STAT_BITS_SE		equ	010h
+FDC_I_STAT_BITS_CRC		equ	008h
+FDC_I_STAT_BITS_T0		equ	004h
+FDC_I_STAT_BITS_IP		equ	002h
+FDC_I_STAT_BITS_BSY		equ	001h
+
+FDC_I_STAT_ERRMASK		equ	018h
+
+FDC_II_CMD_RDSEC		equ	080h
+
+FDC_II_CMD_BITS_M		equ	010h
+FDC_II_CMD_BITS_H		equ	008h
+FDC_II_CMD_BITS_E		equ	004h
+FDC_II_CMD_BITS_P		equ	002h
+FDC_II_CMD_BITS_A0		equ	001h
+
+
+FDC_II_STAT_BITS_MO		equ	080h
+FDC_II_STAT_BITS_WP		equ	040h
+FDC_II_STAT_BITS_RT		equ	020h
+FDC_II_STAT_BITS_RNF		equ	010h
+FDC_II_STAT_BITS_CRC		equ	008h
+FDC_II_STAT_BITS_LD		equ	004h
+FDC_II_STAT_BITS_DRQ		equ	002h
+FDC_II_STAT_BITS_BSY		equ	001h
+
+FDC_II_STAT_WR_ERRMASK		equ	07Ch
+FDC_II_STAT_RD_ERRMASK		equ	03Ch
+

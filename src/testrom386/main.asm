@@ -1,8 +1,10 @@
 [map all]
 
 
-cpu 186
+cpu 386
 
+
+;%define MEMMAP 1
 
 
 
@@ -191,6 +193,17 @@ FDC_II_STAT_RD_ERRMASK		equ	03Ch
 NMI_PTR 	resw		1
 
 
+%macro		OUT_DX_AL 0
+%ifdef MEMMAP
+		mov  BP,DX
+		mov [GS:BP], AL
+
+%else
+		out DX,AL
+%endif 
+%endmacro
+
+
 %macro 		MODEx 2	; tbl, ula
 
 		mov	CX,16
@@ -198,23 +211,23 @@ NMI_PTR 	resw		1
 		mov	SI,%1
 		mov	DX,io_SHEILA_CRTC
 %%loop:		mov	AL,AH
-		out	DX,AL
+		OUT_DX_AL
 		inc	DX
 		mov	AL,[CS:SI]
-		out	DX,AL
+		OUT_DX_AL
 		dec	DX
 		inc	SI
 		inc	AH
 		loop	%%loop
 		mov	DX,io_SHEILA_ULA
 		mov	AL,%2
-		out	DX,AL
+		OUT_DX_AL
 %endmacro
 
 
 %macro		OUTAL	1
 		mov	DX,%1
-		out	(DX),AL
+		OUT_DX_AL
 %endmacro
 
 
@@ -242,12 +255,12 @@ NMI_PTR 	resw		1
 		; set up palette as B&W
 		mov	AL, 7
 		mov	DX, io_SHEILA_ULA_PAL
-%%lp:		out	DX,AL
+%%lp:		OUT_DX_AL
 		add	AL, 0h10
 		jns	%%lp
 
 		mov	AL,0h80 + %1
-%%lp2:		out	DX,AL
+%%lp2:		OUT_DX_AL
 		add	AL, 0h10
 		js	%%lp2
 %endmacro
@@ -277,12 +290,35 @@ NMI_PTR 	resw		1
 %endmacro
 
 
+REMAPCFGH  equ     0x0023
+REMAPCFGL  equ     0x0022
+REMAPCFG   equ     0x0022
 
 		section .text
 
 _start:
 handle_res:	
 		cli	; no interrupts please!
+		cld
+
+%ifdef MEMMAP
+		mov	AX,0F000h
+		mov	GS,AX
+%endif
+
+        		in	AL,REMAPCFGH	; reset the state machine (state A)
+        		mov	AX,0x8000
+        		out	REMAPCFGH,AL	; move to (state B)
+        		xchg	AH,AL
+        		out	REMAPCFGL,AL	; move to (state C)
+        		out	REMAPCFG,AX	; move to (state D), sets ESE bit
+
+
+		mov	DX,0F438h
+		mov	AX,0FF80h
+		out	(DX),AX
+
+
 
 		; set up BIOS interrupt vectors to dummy interrupt [l=595]
 		sub	DI,DI
@@ -331,7 +367,7 @@ D3:		mov	AX,DUMMY_RETURN
 		; set latches 6..0 to 1
 		mov	DX,io_SHEILA_SYSVIA_ORB
 .llp:		dec	AL
-		out	DX,AL
+		OUT_DX_AL
 		cmp	AL,9
 		jnc	.llp
 
@@ -369,36 +405,36 @@ D3:		mov	AX,DUMMY_RETURN
 		; set DDRA of user via to all outputs
 		mov	DX,io_SHEILA_USRVIA_DDRA
 		mov	AL,0FFh
-		out	DX,AL
+		OUT_DX_AL
 
 		; disable VIA interrupts and clear flags
 		mov	AL,07Fh
 
 		mov	DX,io_SHEILA_USRVIA_IER
-		out	DX,AL
+		OUT_DX_AL
 		dec	DX
-		out	DX,AL
+		OUT_DX_AL
 
 		mov	DX,io_SHEILA_SYSVIA_IER
-		out	DX,AL
+		OUT_DX_AL
 		dec	DX
-		out	DX,AL
+		OUT_DX_AL
 
 		inc	DX
 		mov	AL,0F2h				; reenable interrupts for T1,T2,CB1,CA1
-		out	DX,AL
+		OUT_DX_AL
         	
 	        	mov	AL,004h
 	        	mov	DX,io_SHEILA_SYSVIA_PCR		
-	        	out	DX,AL				; CB2=in-neg, CB1=neg, CA2=in-pos, CA1=neg
+	        	OUT_DX_AL				; CB2=in-neg, CB1=neg, CA2=in-pos, CA1=neg
 	
 	        	mov	AL,060h
 	        	mov	DX,io_SHEILA_SYSVIA_ACR		
-	        	out	DX,AL				; T1I=cont, T2=pulse count, SR=disabled, PA/B latch=disabled
+	        	OUT_DX_AL				; T1I=cont, T2=pulse count, SR=disabled, PA/B latch=disabled
 	
 	        	mov	AL,00Eh
 	        	mov	DX,io_SHEILA_SYSVIA_T1LL
-	        	out	DX,AL
+	        	OUT_DX_AL
 
 
 
@@ -430,43 +466,43 @@ D3:		mov	AX,DUMMY_RETURN
 		mov	CX,40*4
 		rep	stosb
 
-		mov	AX,SEG_DEBUG
-		mov	DS,AX
-		sub	SI,SI
-		mov	AX,SEG_SCREEN_MO7
-		mov	ES,AX
-		mov	DI,12*40
-
-		mov	BH,129		; colour char
-.ll102:		mov	BL,0		; number of bytes this string
-
-		; a bit of colour
-		mov	AL,BH
-		stosb
-		inc	BH
-
-		; get first byte of version string
-		lodsb	
-		or	AL,AL
-		jz	endvers
-
-.ll104:		inc	BL
-		stosb
-		lodsb
-		or	AL,AL
-		jnz	.ll104
-
-		;move to next line
-.ll107:		sub	BL,40
-		jns	.ll107
-		neg	BL
-		dec	BL
-		mov	CL,BL
-		xor	AL,AL		
-		mov	CH,AL
-		rep	stosb
-
-		jmp	.ll102
+;;;		mov	AX,SEG_DEBUG
+;;;		mov	DS,AX
+;;;		sub	SI,SI
+;;;		mov	AX,SEG_SCREEN_MO7
+;;;		mov	ES,AX
+;;;		mov	DI,12*40
+;;;
+;;;		mov	BH,129		; colour char
+;;;.ll102:		mov	BL,0		; number of bytes this string
+;;;
+;;;		; a bit of colour
+;;;		mov	AL,BH
+;;;		stosb
+;;;		inc	BH
+;;;
+;;;		; get first byte of version string
+;;;		lodsb	
+;;;		or	AL,AL
+;;;		jz	endvers
+;;;
+;;;.ll104:		inc	BL
+;;;		stosb
+;;;		lodsb
+;;;		or	AL,AL
+;;;		jnz	.ll104
+;;;
+;;;		;move to next line
+;;;.ll107:		sub	BL,40
+;;;		jns	.ll107
+;;;		neg	BL
+;;;		dec	BL
+;;;		mov	CL,BL
+;;;		xor	AL,AL		
+;;;		mov	CH,AL
+;;;		rep	stosb
+;;;
+;;;		jmp	.ll102
 
 		
 
