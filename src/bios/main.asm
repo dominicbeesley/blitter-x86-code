@@ -13,6 +13,7 @@ HARDCODE_MEMORY_SIZE equ 256
 	cpu 386
 	CLOCK_SPEED	equ	32000000
 	%include "hardware_386ex.inc"
+	%define DEBUG_LOTS
 %else
 	%error "No board config detected"
 %endif
@@ -1214,8 +1215,9 @@ BOOT_STRAP:
 
 		nop
 		nop
-
+	%ifdef DEBUG_LOTS
 		DBG_STR	`\nINT 19h starting...`
+	%endif
 
 		mov	SI,B_STR
 		call	print_str0
@@ -1354,8 +1356,10 @@ print_str0:	push	AX
 DISKETTE_IO:		
 		sti
 		
+	%ifdef DEBUG_LOTS
 		DBG_STR	`INT13h=====\n`
 		call	DBG_DUMPREGS_I
+	%endif
 
 		push	BX
 		push	CX
@@ -1370,7 +1374,9 @@ DISKETTE_IO:
 		call	DDS
 		call	disk_io_int		; call the internal functions
 
+	%ifdef DEBUG_LOTS
 		DBG_STR	`=====INT13h\n`
+	%endif
 
 		; TODO: - think we can ignore all this stuff 1770 does motor control
 		mov	AH,[DISKETTE_STATUS]	; get return value
@@ -1406,8 +1412,10 @@ disk_io_int:
 		jge	disk_ret_bad_cmd
 		jmp	word [CS:SI+disk_io_tbl]
 
-disk_ret_bad_cmd:
+disk_ret_bad_cmd
+	%ifdef DEBUG_LOTS
 		DBG_STR `\nBADDSK`
+	%endif
 		push	AX
 		mov	AL,AH
 		call	deice_HEX2
@@ -1502,8 +1510,9 @@ disk_io_read:	push	ES
 
 
 		
-
+	%ifdef DEBUG_LOTS
 		DBG_STR  `SECRD:`
+	%endif
 
 .next_sector:
 		pop	AX
@@ -1511,7 +1520,9 @@ disk_io_read:	push	ES
 		push	AX
 		js	.r
 
+	%ifdef DEBUG_LOTS
 		DBG_C   '$'
+	%endif
 
 		mov	DX,DMACMD1
 		mov	AL,04h
@@ -1558,7 +1569,9 @@ disk_io_read:	push	ES
 		mov	AL,io_SHEILA_1770_DAT >> 8		; source is the 1770 data register
 		out	DX,AL
 
+	%ifdef DEBUG_LOTS
 		DBG_STR `\nLIN_ADDR=`
+	%endif
 
 		xor	EAX,EAX
 		mov	AX,ES
@@ -1567,6 +1580,8 @@ disk_io_read:	push	ES
 		jnc	.skc
 		add	EAX,010000h
 .skc
+
+	%ifdef DEBUG_LOTS
 		ror	EAX,16
 		xchg	AL,AH
 		call	deice_HEX2
@@ -1579,6 +1594,7 @@ disk_io_read:	push	ES
 		call	deice_HEX2
 
 		call	deice_CRLF
+	%endif
 
 		; need to convert ES:BX to linear address here 
 		mov	AX,ES
@@ -1629,6 +1645,7 @@ disk_io_read:	push	ES
 		mov	AL,CL
 		call	FDC_SEC_WRITE
 
+	%ifdef DEBUG_LOTS
 		DBG_C	'T'
 		call	FDC_TRK_READ
 		call	deice_HEX2
@@ -1638,6 +1655,7 @@ disk_io_read:	push	ES
 
 
 		DBG_C	'e'
+	%endif
 
 		mov	AL,FDC_II_CMD_RDSEC+FDC_II_CMD_BITS_E
 		or	AH,AH
@@ -1708,8 +1726,10 @@ disk_io_read:	push	ES
 
 
 .r:
+	%ifdef DEBUG_LOTS
 		DBG_C	'}'
 		call	deice_CRLF
+	%endif
 
 		pop	AX
 		pop	DX
