@@ -1,6 +1,6 @@
 [map all]
 
-
+HARDCODE_MEMORY_SIZE equ 256
 	; TODO: Norton utilities get stuck reading io 3DAh - VGA?!?/CGA control/status - make it toggle bits in
 	;	fb_cpu80188.vhd to fool programs that wait for retrace?
 
@@ -604,6 +604,8 @@ TIMER_DIVIDER   equ	(CLOCK_SPEED*10)/(4*TIMER_PRESCALE*182)
 
 		; BOOT!
 
+		mov	word [MEMORY_SIZE], HARDCODE_MEMORY_SIZE
+
 		int	19h
 
 
@@ -924,7 +926,7 @@ MEMORY_SIZE_DET:
 	PUSH	DS			; SAVE SEGMENT
 	CALL	DDS
 	;TODO: not sure!
-	MOV	AX,640
+	MOV	AX,HARDCODE_MEMORY_SIZE
 	POP	DS			; RECOVER SEGMENT
 	IRET				; RETURN TO CALLER
 
@@ -1948,7 +1950,7 @@ CASSETTE_IO:
 	call	deice_HEX2
 	call deice_CRLF
 	pop	AX
-	mov	AH,086h
+;;	mov	AH,086h
 	STC	
 	RETF	2			; return flags
 

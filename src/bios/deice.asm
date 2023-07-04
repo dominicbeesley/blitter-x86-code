@@ -9,6 +9,7 @@ DEICE_STACK_SIZE		equ	0A0h
 
 deice_regs		equ	0h
 
+	%ifdef BOARD_18x
 deice_reg_DI		equ	deice_regs+00h
 deice_reg_SI		equ	deice_regs+02h
 deice_reg_BP		equ	deice_regs+04h
@@ -27,6 +28,28 @@ deice_reg_SS		equ	deice_regs+1Ch
 deice_STATUS		equ	deice_regs+1Eh
 
 deice_regs_top		equ	deice_regs + 1Fh
+	%elifdef BOARD_386ex
+deice_reg_EDI		equ	deice_regs+00h
+deice_reg_ESI		equ	deice_regs+04h
+deice_reg_EBP		equ	deice_regs+08h
+deice_reg_EBX		equ	deice_regs+0Ch
+deice_reg_EDX		equ	deice_regs+10h
+deice_reg_ECX		equ	deice_regs+14h
+deice_reg_EAX		equ	deice_regs+18h
+deice_reg_DS		equ	deice_regs+1Ch
+deice_reg_ES		equ	deice_regs+1Eh
+deice_reg_EIP		equ	deice_regs+20h
+deice_reg_CS		equ	deice_regs+24h
+deice_reg_EFLAGS		equ	deice_regs+26h
+deice_reg_ESP		equ	deice_regs+2Ah
+deice_reg_SS		equ	deice_regs+2Eh
+deice_STATUS		equ	deice_regs+30h
+
+deice_regs_top		equ	deice_regs + 31h
+
+	%else
+		error "Unknown board type"
+	%endif
 
 deice_run_flag		equ	deice_regs_top
 deice_ram_top		equ	deice_run_flag + 1		; has to be aligned!
@@ -97,18 +120,7 @@ DEICE_INT3:
 			mov	AL,DEICE_STATE_BP
 			jmp	INT_ENTRY
 
-		; initialise the serial port for deice
-deice_init:	pushf
-		cli
-		push	ES
-		push	AX
-		push	DX
-		push	CX
-		push	DI
-
-
-		DBG_STR	`DeIce started...\n`
-
+deice_setup_vectors:
 		; setup deice interrupts
 		xor	AX,AX
 		mov	ES,AX
@@ -121,7 +133,21 @@ deice_init:	pushf
 		mov	word [ES:0004h + 2],AX
 		mov	word [ES:000Ch + 2],AX
 		mov	word [ES:NMI_PTR + 2],AX
+		ret
 
+		; initialise the serial port for deice
+deice_init:	pushf
+		cli
+		push	ES
+		push	AX
+		push	DX
+		push	CX
+		push	DI
+
+
+		DBG_STR	`DeIce started...\n`
+
+		call	deice_setup_vectors
 
 		mov	DX,io_sheila_SERIAL_ULA
 		mov	AL,040h				; 19200,19200
@@ -332,78 +358,85 @@ deice_enter:
 INT_ENTRY:
 
 ; For nmi check to see if we're already running and exit if so
-		push	ES
+		push	DS
 		push	AX					; stack ES and status code
 		mov	AX,DEICE_SEG
-		mov	ES,AX					; ES now points at our segment
+		mov	DS,AX					; ES now points at our segment
 		mov	AH,1
-		lock xchg [ES:deice_run_flag],AH
+		lock xchg [deice_run_flag],AH
 		or	AH,AH
 		jz	.S1
 		; already running POH
 		pop	AX
-		pop	ES
+		pop	DS
 		pop	AX
 		iret
 
 
 .S1:		
+	%ifdef BOARD_18x
 		
 		pop	AX
-		mov	[ES:deice_STATUS],AL			; save status # set on entry
+		mov	[deice_STATUS],AL			; save status # set on entry
 
-		pop	ES					; get back ES
-		pop	AX					; get back original AX
-
-		push	ES
-		push	DS
-%ifdef BOARD_18x
-		pusha						; push all registers to user's stack
-%else
-		push	AX
-		push	CX
-		push	DX
-		push	BX
-		push	BX	;ignored - is stack pointer in 186/pusha
-		push	BP
-		push	SI
-		push	DI
-%endif
-
-		;stack should now be
-		;		flags
-		;		CS
-		;		IP
-		;		ES
-		;		DS
-		;		AX
-		;		CX
-		;		DX
-		;		BX
-		;		SP	(ignored)
-		;		BP
-		;		SI
-		;		DI
-
-
-
-		mov	AX,DEICE_SEG				; point ES at our segment
-		mov	ES,AX
-
-
-		mov	AX,SP
-		mov	SI,AX					; setup SI ready to copy registers to block
-		add	AX,deice_reg_FLAGS-deice_regs+2		; calc original stack pointer before interrupt
-		mov	[ES:deice_reg_SP],AX			; and save in regs block
+		pop	word [deice_reg_DS]			; pop back original DS
+		mov	AX,ES					; save ES register
+		mov	[deice_reg_ES],AX
 		mov	AX,SS
-		mov	[ES:deice_reg_SS],AX			; and stack seg
-		mov	DS,AX					; source seg for stack copy
-		mov	DI,deice_regs				; base of registers
+		mov	[deice_reg_SS],AX
 
-;  Save stacked registers from stack to reg block for return to master
-		cld
-		mov	CX,deice_reg_FLAGS-deice_regs+2		; number to copy from original stack
-		rep movsb					; bytewise copy stack to regs block
+		pop	word [deice_reg_AX]			; get back original AX
+
+		pop	word [deice_reg_IP]			; pop back original IP
+		pop	word [deice_reg_CS]			; pop back original CS
+		pop	word [deice_reg_FLAGS]			; pop back original 
+		
+		; save other registers
+		mov	[deice_reg_CX],CX
+		mov	[deice_reg_DX],DX
+		mov	[deice_reg_BX],BX
+		mov	[deice_reg_BP],BP
+		mov	[deice_reg_SI],SI
+		mov	[deice_reg_DI],DI
+		
+		mov	AX,SP					; stack pointer should now be reset
+		mov	[deice_reg_SP],AX			; save it to registers
+
+	%else
+
+		pop	AX
+		mov	[deice_STATUS],AL			; save status # set on entry
+
+		pop	word [deice_reg_DS]			; pop back original DS
+		mov	AX,ES					; save ES register
+		mov	[deice_reg_ES],AX
+		mov	AX,SS
+		mov	[deice_reg_SS],AX
+
+		pop	AX
+		mov	[deice_reg_EAX], EAX			; get back original AX
+
+		pop	word [deice_reg_EIP]			; pop back original IP
+		mov	word [deice_reg_EIP + 2], 0			; TODO : get full EIP?
+		pop	word [deice_reg_CS]			; pop back original CS
+		pop	word [deice_reg_EFLAGS]			; pop back original 
+		mov	word [deice_reg_EFLAGS + 2], 0			; TODO : get full EFLAGS?
+		
+		; save other registers
+		mov	[deice_reg_ECX],ECX
+		mov	[deice_reg_EDX],EDX
+		mov	[deice_reg_EBX],EBX
+		mov	[deice_reg_EBP],EBP
+		mov	[deice_reg_ESI],ESI
+		mov	[deice_reg_EDI],EDI
+		
+		mov	EAX,ESP					; stack pointer should now be reset
+		mov	[deice_reg_ESP],EAX			; save it to registers
+
+	%endif
+		; force deice vectors, DOS tends to bugger them up
+
+		call	deice_setup_vectors
 
 		; reset stack to local stack - this will allow us to alter
 		; the real stack areas without conflict
@@ -660,35 +693,21 @@ WRITE_REGS:	xor	CX,CX
 ;  Entry with A=function code, B=data size, X=COMBUF+2
 ;
 RUN_TARGET:
-;
-;  Switch to user stack
+	%ifdef BOARD_18x
+		mov	AX,[deice_reg_SP]
+		mov	SP,AX
 		mov	AX,[deice_reg_SS]
 		mov	SS,AX
+		mov	AX,[deice_reg_ES]
 		mov	ES,AX
-		mov	SP,[deice_reg_SP]
-		sub	SP,deice_reg_FLAGS-deice_regs+2
-		mov	DI,SP
-
-
-		cld
-		mov	SI,deice_regs
-		mov	CX,deice_reg_FLAGS-deice_regs+2
-.lp:		rep	movsb
-
-
-%ifdef BOARD_18x
-		popa						; push all registers to user's stack
-%else
-		pop	DI
-		pop	SI
-		pop	BP
-		pop	BX	; phoney space for SP/popA
-		pop	BX
-		pop	DX
-		pop	CX
-		pop	AX
-%endif
-		pop	DS
+		
+		mov	DI,[deice_reg_DI]
+		mov	SI,[deice_reg_SI]
+		mov	BP,[deice_reg_BP]
+		mov	BX,[deice_reg_BX]
+		mov	DX,[deice_reg_DX]
+		mov	CX,[deice_reg_CX]
+		mov	AX,[deice_reg_AX]
 
 		; do an extra IRET, this allows any pending NMI's to clear before 
 		; clearing the run flag
@@ -698,20 +717,51 @@ RUN_TARGET:
 		iret
 
 .actual_iret:
-
+		push	word [deice_reg_FLAGS]
+		push	word [deice_reg_CS]
+		push	word [deice_reg_IP]
+		push	word [deice_reg_DS]
 		; re-enable reentry
-		push	DEICE_SEG
-		pop	ES
-		push	AX
-		xor	AX,AX
-		mov [ES:deice_run_flag],AH
-		pop	AX
-
-		; original ES
-		pop	ES
+		mov 	byte [deice_run_flag],0
+		; pop original DS
+		pop	DS
 
 		iret
+	%else
+		mov	EAX,[deice_reg_ESP]
+		mov	ESP,EAX
+		mov	AX,[deice_reg_SS]
+		mov	SS,AX
+		mov	AX,[deice_reg_ES]
+		mov	ES,AX
+		
+		mov	EDI,[deice_reg_EDI]
+		mov	ESI,[deice_reg_ESI]
+		mov	EBP,[deice_reg_EBP]
+		mov	EBX,[deice_reg_EBX]
+		mov	EDX,[deice_reg_EDX]
+		mov	ECX,[deice_reg_ECX]
+		mov	EAX,[deice_reg_EAX]
 
+		; do an extra IRET, this allows any pending NMI's to clear before 
+		; clearing the run flag
+		pushf
+		push	CS
+		push	.actual_iret
+		iret
+
+.actual_iret:
+		push	word [deice_reg_EFLAGS]
+		push	word [deice_reg_CS]
+		push	word [deice_reg_EIP]		; TODO restore full EIP
+		push	word [deice_reg_DS]
+		; re-enable reentry
+		mov 	byte [deice_run_flag],0
+		; pop original DS
+		pop	DS
+
+		iret
+	%endif
 
 
 
